@@ -49,7 +49,7 @@ namespace CrawlerSamples
             var document = parser.Parse(htmlString);
 
             //Selector carbox element list
-            var carboxList = document.QuerySelectorAll("div.customGoodsList div.content div.list li.carbox");
+            var carboxList = document.QuerySelectorAll("div.shop-content div.content div.list li.carbox");
 
             var carModelList = new List<CarModel>();
             foreach (var carbox in carboxList)
