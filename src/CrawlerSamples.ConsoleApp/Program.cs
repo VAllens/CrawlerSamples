@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using AngleSharp;
 using AngleSharp.Dom;
-using AngleSharp.Parser.Html;
+using AngleSharp.Html.Parser;
 using Newtonsoft.Json;
 using PuppeteerSharp;
 
@@ -15,12 +15,12 @@ namespace CrawlerSamples
     internal class Program
     {
         private const string Url = "https://store.mall.autohome.com.cn/83106681.html";
-        private const int ChromiumRevision = Downloader.DefaultRevision;
+        private const int ChromiumRevision = BrowserFetcher.DefaultRevision;
 
         private static async Task Main(string[] args)
         {
             //Download chromium browser revision package
-            await Downloader.CreateDefault().DownloadRevisionAsync(ChromiumRevision);
+            await new BrowserFetcher().DownloadAsync(ChromiumRevision);
 
             //Test AngleSharp
             await TestAngleSharp();
@@ -45,8 +45,9 @@ namespace CrawlerSamples
             /*
              * Parsing of HTML document string
              */
-            var parser = new HtmlParser(Configuration.Default);
-            var document = parser.Parse(htmlString);
+            var context = BrowsingContext.New(Configuration.Default);
+            var parser = context.GetService<IHtmlParser>();
+            var document = parser.ParseDocument(htmlString);
 
             //Selector carbox element list
             var carboxList = document.QuerySelectorAll("div.shop-content div.content div.list li.carbox");
@@ -72,7 +73,7 @@ namespace CrawlerSamples
             //Enabled headless option
             var launchOptions = new LaunchOptions { Headless = true };
             //Starting headless browser
-            var browser = await Puppeteer.LaunchAsync(launchOptions, ChromiumRevision);
+            var browser = await Puppeteer.LaunchAsync(launchOptions);
 
             //New tab page
             var page = await browser.NewPageAsync();

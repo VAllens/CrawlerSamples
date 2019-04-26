@@ -2,15 +2,15 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
-	<LangVersion>7.1</LangVersion>
-	<RootNamespace>CrawlerSamples</RootNamespace>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+  	<LangVersion>7.1</LangVersion>
+	  <RootNamespace>CrawlerSamples</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AngleSharp" Version="0.9.9.2" />
-    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
-    <PackageReference Include="PuppeteerSharp" Version="1.0.2" />
+    <PackageReference Include="AngleSharp" Version="0.11.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+    <PackageReference Include="PuppeteerSharp" Version="1.14.0" />
   </ItemGroup>
 
 </Project>
