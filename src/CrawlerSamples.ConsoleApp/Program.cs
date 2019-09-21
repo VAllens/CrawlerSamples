@@ -35,9 +35,9 @@ namespace CrawlerSamples
              * TODO: Used WithJavaScript function need install AngleSharp.Scripting.Javascript nuget package
              * Note: that JavaScripts support is an experimental and does not support complex JavaScripts code.
              */
-            //IConfiguration config = Configuration.Default.WithDefaultLoader().WithCss().WithCookies().WithJavaScript();
+            //IConfiguration config = Configuration.Default.WithDefaultLoader();
             //IBrowsingContext context = BrowsingContext.New(config);
-            //IDocument document = await context.OpenAsync(url);
+            //IDocument document = await context.OpenAsync(Url);
 
             //Used PuppeteerSharp loading of HTML document
             var htmlString = await TestPuppeteerSharp();
@@ -75,17 +75,19 @@ namespace CrawlerSamples
             //Starting headless browser
             var browser = await Puppeteer.LaunchAsync(launchOptions);
 
-            //New tab page
-            var page = await browser.NewPageAsync();
+            //Get all(default) pages 
+            var pages = await browser.PagesAsync();
+            //Get first page or new tab page
+            var firstPage = pages.Length > 0 ? pages[0]: await browser.NewPageAsync();
             //Request URL to get the page
-            await page.GoToAsync(Url);
+            await firstPage.GoToAsync(Url);
 
             //Get and return the HTML content of the page
-            var htmlString = await page.GetContentAsync();
+            var htmlString = await firstPage.GetContentAsync();
 
             #region Dispose resources
             //Close tab page
-            await page.CloseAsync();
+            await firstPage.CloseAsync();
 
             //Close headless browser, all pages will be closed here.
             await browser.CloseAsync();
