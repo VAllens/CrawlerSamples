@@ -30,12 +30,7 @@ jobs:
           dotnet-version: "10.0.x"
 
       - name: Restore
-        run: dotnet restore CrawlerSamples.sln -r linux-x64
-        if: runner.os == 'Linux'
-
-      - name: Restore
-        run: dotnet restore CrawlerSamples.sln
-        if: runner.os != 'Linux'
+        run: dotnet restore CrawlerSamples.sln --use-current-runtime
 
       - name: Build
         run: dotnet build CrawlerSamples.sln -c Release --no-restore
@@ -45,7 +40,7 @@ jobs:
         run: >
           dotnet publish src/CrawlerSamples.ConsoleApp/CrawlerSamples.ConsoleApp.csproj
           -c Release
-          -r linux-x64
+          --use-current-runtime
           --self-contained false
           -o artifacts/linux-x64
           --no-restore
