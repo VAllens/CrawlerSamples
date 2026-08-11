@@ -59,7 +59,7 @@ The app prints a JSON array of repository models, for example:
 
 Screenshot:
 
-<img src="https://github.com/VAllens/CrawlerSamples/raw/master/SampleSnapshoot.png" width="859" height="453" alt="Sample snapshot" title="SampleSnapshoot">
+<img src="https://github.com/VAllens/CrawlerSamples/raw/main/SampleSnapshoot.png" width="859" height="453" alt="Sample snapshot" title="SampleSnapshoot">
 
 ## Project layout
 

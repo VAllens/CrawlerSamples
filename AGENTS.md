@@ -18,5 +18,5 @@ This repository is a .NET sample demonstrating Puppeteer Sharp + AngleSharp craw
 
 ## CI expectations
 
-- GitHub Actions builds on push/PR to `master`
+- GitHub Actions builds on push/PR to `main`
 - Optional Codex PR review workflow runs only when `CODEX_REVIEW_ENABLED=true`

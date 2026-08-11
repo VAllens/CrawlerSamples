@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-This is a sample / educational repository. Security fixes are applied on the latest `master` branch only.
+This is a sample / educational repository. Security fixes are applied on the latest `main` branch only.
 
 ## Reporting a vulnerability
 
