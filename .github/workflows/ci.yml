@@ -35,21 +35,19 @@ jobs:
       - name: Build
         run: dotnet build CrawlerSamples.sln -c Release --no-restore
 
-      - name: Publish (linux-x64 smoke)
-        if: runner.os == 'Linux'
+      - name: Publish
         run: >
           dotnet publish src/CrawlerSamples.ConsoleApp/CrawlerSamples.ConsoleApp.csproj
           -c Release
           --use-current-runtime
           --self-contained
-          -o artifacts/linux-x64
+          -o artifacts/publish
           --no-restore
 
       - name: Upload publish artifact
-        if: runner.os == 'Linux'
         uses: actions/upload-artifact@v4
         with:
-          name: crawler-samples-linux-x64
-          path: artifacts/linux-x64
+          name: crawler-samples-${{ matrix.os }}
+          path: artifacts/publish
           if-no-files-found: error
           retention-days: 7
