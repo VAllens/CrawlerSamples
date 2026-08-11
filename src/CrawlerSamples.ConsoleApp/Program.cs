@@ -81,10 +81,9 @@ namespace CrawlerSamples
 
             // Selector repository element list
             // Note: GitHub UI markup changes over time; keep selectors under review when scraping breaks.
-            Type listItemType = typeof(IHtmlListItemElement);
-            IHtmlCollection<IHtmlListItemElement> repoElementList = document.QuerySelectorAll("ul[data-listview-component='items-list'] > li")
-                .Where(x => listItemType.IsInstanceOfType(x))
-                .Cast<IHtmlListItemElement>()
+            IHtmlCollection<IHtmlListItemElement> repoElementList = document
+                .QuerySelectorAll("ul[data-listview-component='items-list'] > li")
+                .OfType<IHtmlListItemElement>()
                 .ToCollection();
 
             RepoModel[] repoModels = new RepoModel[repoElementList.Length];
