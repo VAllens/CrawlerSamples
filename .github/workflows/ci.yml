@@ -41,7 +41,7 @@ jobs:
           dotnet publish src/CrawlerSamples.ConsoleApp/CrawlerSamples.ConsoleApp.csproj
           -c Release
           --use-current-runtime
-          --self-contained false
+          --self-contained
           -o artifacts/linux-x64
           --no-restore
 
