@@ -1,113 +1,156 @@
-﻿/*
+/*
  * This is a Puppeteer+AngleSharp crawler console app samples
  */
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using AngleSharp;
 using AngleSharp.Dom;
+using AngleSharp.Html.Dom;
 using AngleSharp.Html.Parser;
-using Newtonsoft.Json;
 using PuppeteerSharp;
+using PuppeteerSharp.BrowserData;
+using System;
+using System.Linq;
+using System.Text;
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace CrawlerSamples
 {
-    internal class Program
+    internal static class Program
     {
-        private const string Url = "https://store.mall.autohome.com.cn/83106681.html";
-        private const int ChromiumRevision = BrowserFetcher.DefaultRevision;
+        private const string Url = "https://github.com/orgs/dotnet/repositories";
 
         private static async Task Main(string[] args)
         {
-            //Download chromium browser revision package
-            await new BrowserFetcher().DownloadAsync(ChromiumRevision);
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
-            //Test AngleSharp
+            // Download chromium browser revision package
+            await new BrowserFetcher().DownloadAsync(Chrome.DefaultBuildId);
+
             await TestAngleSharp();
 
-            Console.ReadKey();
+            if (ShouldWaitForExit())
+            {
+                Console.WriteLine("Press any key to exit...");
+                Console.ReadKey(intercept: true);
+            }
+        }
+
+        private static bool ShouldWaitForExit()
+        {
+            return Environment.UserInteractive
+                && !Console.IsInputRedirected
+                && !Console.IsOutputRedirected;
         }
 
         private static async Task TestAngleSharp()
         {
             /*
              * Used AngleSharp loading of HTML document
-             * TODO: Used WithJavaScript function need install AngleSharp.Scripting.Javascript nuget package
-             * Note: that JavaScripts support is an experimental and does not support complex JavaScripts code.
+             * TODO: To enable JS evaluation, install the AngleSharp.Js nuget package
+             *       (AngleSharp.Scripting.Javascript is deprecated and replaced by AngleSharp.Js)
+             *       and call WithJs() on the configuration.
+             * Note: AngleSharp.Js (via Jint) now supports modern ECMAScript (ES2015–ES2025) and can run
+             *       libraries such as jQuery / React 16 / Bootstrap 5 in its test suite. For many
+             *       real-world pages you typically also need AngleSharp.Io, AngleSharp.Css, and WithEventLoop().
+             *       It is still not a full browser: DOM/browser API coverage and heavy SPA apps can fail,
+             *       and Jint is an interpreter (slower than Chromium). Prefer PuppeteerSharp for complex sites.
              */
-            //IConfiguration config = Configuration.Default.WithDefaultLoader();
+            //IConfiguration config = Configuration.Default
+            //    .WithDefaultLoader(new LoaderOptions { IsResourceLoadingEnabled = true })
+            //    //.WithCss()
+            //    .WithJs()
+            //    .WithEventLoop();
             //IBrowsingContext context = BrowsingContext.New(config);
             //IDocument document = await context.OpenAsync(Url);
 
-            //Used PuppeteerSharp loading of HTML document
-            var htmlString = await TestPuppeteerSharp();
+            // Used PuppeteerSharp loading of HTML document
+            string htmlString = await TestPuppeteerSharp();
 
             /*
              * Parsing of HTML document string
              */
-            var context = BrowsingContext.New(Configuration.Default);
-            var parser = context.GetService<IHtmlParser>();
-            var document = parser.ParseDocument(htmlString);
-
-            //Selector carbox element list
-            var carboxList = document.QuerySelectorAll("div.shop-content div.content div.list li.carbox");
-
-            var carModelList = new List<CarModel>();
-            foreach (var carbox in carboxList)
+            IBrowsingContext context = BrowsingContext.New(Configuration.Default);
+            IHtmlParser? parser = context.GetService<IHtmlParser>();
+            if (parser == null)
             {
-                //Parsing and converting to the car model object.
-                var model = CreateModelWithAngleSharp(carbox);
-                carModelList.Add(model);
-
-                //Printing to console windows
-                var jsonString = JsonConvert.SerializeObject(model);
-                Console.WriteLine(jsonString);
-                Console.WriteLine();
+                throw new InvalidOperationException($"Failed to get {nameof(IHtmlParser)} service.");
             }
 
-            Console.WriteLine("Total count:" + carModelList.Count);
+            IHtmlDocument document = parser.ParseDocument(htmlString);
+
+            // Selector repository element list
+            // Note: GitHub UI markup changes over time; keep selectors under review when scraping breaks.
+            Type listItemType = typeof(IHtmlListItemElement);
+            IHtmlCollection<IHtmlListItemElement> repoElementList = document.QuerySelectorAll("ul[data-listview-component='items-list'] > li")
+                .Where(x => listItemType.IsInstanceOfType(x))
+                .Cast<IHtmlListItemElement>()
+                .ToCollection();
+
+            RepoModel[] repoModels = new RepoModel[repoElementList.Length];
+            for (int i = 0; i < repoElementList.Length; i++)
+            {
+                // Parsing and converting to the repository model object.
+                repoModels[i] = CreateModelWithAngleSharp(repoElementList[i]);
+            }
+
+            // Printing to console windows
+            JsonSerializerOptions options = new JsonSerializerOptions
+            {
+                TypeInfoResolver = CustomJsonSerializerContext.Default,
+                WriteIndented = true,
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            };
+
+            string jsonString = JsonSerializer.Serialize(repoModels, options);
+            Console.WriteLine(jsonString);
+            Console.WriteLine();
+            Console.WriteLine("Total count: " + repoModels.Length);
         }
 
         private static async Task<string> TestPuppeteerSharp()
         {
-            //Enabled headless option
-            var launchOptions = new LaunchOptions { Headless = true };
-            //Starting headless browser
-            var browser = await Puppeteer.LaunchAsync(launchOptions);
+            // Enabled headless option
+            LaunchOptions launchOptions = new LaunchOptions { Headless = true };
+            // Starting headless browser
+            await using IBrowser browser = await Puppeteer.LaunchAsync(launchOptions).ConfigureAwait(false);
 
-            //Get all(default) pages 
-            var pages = await browser.PagesAsync();
-            //Get first page or new tab page
-            var firstPage = pages.Length > 0 ? pages[0]: await browser.NewPageAsync();
-            //Request URL to get the page
-            await firstPage.GoToAsync(Url);
+            // Get all(default) pages
+            IPage[] pages = await browser.PagesAsync().ConfigureAwait(false);
+            // Get first page or new tab page
+            IPage firstPage = pages.Length > 0 ? pages[0] : await browser.NewPageAsync().ConfigureAwait(false);
 
-            //Get and return the HTML content of the page
-            var htmlString = await firstPage.GetContentAsync();
-
-            #region Dispose resources
-            //Close tab page
-            await firstPage.CloseAsync();
-
-            //Close headless browser, all pages will be closed here.
-            await browser.CloseAsync();
-            #endregion
-
-            return htmlString;
-        }
-
-        private static CarModel CreateModelWithAngleSharp(IParentNode node)
-        {
-            var model = new CarModel
+            try
             {
-                Title = node.QuerySelector("a div.carbox-title").TextContent,
-                ImageUrl = node.QuerySelector("a div.carbox-carimg img").GetAttribute("src"),
-                ProductUrl = node.QuerySelector("a").GetAttribute("href"),
-                Tip = node.QuerySelector("a div.carbox-tip").TextContent,
-                OrdersNumber = node.QuerySelector("a div.carbox-number span").TextContent
-            };
-
-            return model;
+                // Request URL to get the page
+                await firstPage.GoToAsync(Url, WaitUntilNavigation.Networkidle2).ConfigureAwait(false);
+                // Get and return the HTML content of the page
+                return await firstPage.GetContentAsync().ConfigureAwait(false);
+            }
+            finally
+            {
+                if (!firstPage.IsClosed)
+                {
+                    await firstPage.CloseAsync().ConfigureAwait(false);
+                }
+            }
         }
+
+        private static RepoModel CreateModelWithAngleSharp(IHtmlListItemElement repoItem)
+        {
+            return new RepoModel
+            {
+                Url = NormalizeText(repoItem.QuerySelector("div[data-listview-item-title-container] > h4 > a")?.GetAttribute("href")),
+                Title = NormalizeText(repoItem.QuerySelector("div[data-listview-item-title-container] > h4 > a > span")?.TextContent),
+                Description = NormalizeText(repoItem.QuerySelector("div.repos-list-description > div")?.TextContent),
+                Visibility = NormalizeText(repoItem.QuerySelector("span[data-listview-item-visibility-label]")?.TextContent),
+                // CSS-module class prefixes are fragile; prefer data-* attributes when available.
+                Language = NormalizeText(repoItem.QuerySelector("span[class^='ReposListItem-module__PrimaryLanguageName']")?.TextContent),
+                License = NormalizeText(repoItem.QuerySelector("div[class^='ReposListItem-module__IconLabel']")?.TextContent)
+            };
+        }
+
+        private static string? NormalizeText(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 }
