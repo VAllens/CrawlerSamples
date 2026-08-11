@@ -42,7 +42,6 @@ jobs:
           --use-current-runtime
           --self-contained
           -o artifacts/publish
-          --no-restore
 
       - name: Upload publish artifact
         uses: actions/upload-artifact@v4
