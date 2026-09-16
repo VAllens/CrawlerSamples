@@ -11,8 +11,13 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+<<<<<<< HEAD
 		<PackageReference Include="AngleSharp" Version="1.8.0" />
 		<PackageReference Include="PuppeteerSharp" Version="25.11.0" />
+=======
+		<PackageReference Include="AngleSharp" Version="1.8.1" />
+		<PackageReference Include="PuppeteerSharp" Version="25.10.0" />
+>>>>>>> origin/main
 	</ItemGroup>
 
 </Project>
