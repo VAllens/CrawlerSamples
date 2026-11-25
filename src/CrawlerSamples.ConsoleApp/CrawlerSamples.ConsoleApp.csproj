@@ -12,7 +12,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="AngleSharp" Version="1.10.1" />
-		<PackageReference Include="PuppeteerSharp" Version="25.17.1" />
+		<PackageReference Include="PuppeteerSharp" Version="25.18.1" />
 	</ItemGroup>
 
 </Project>
